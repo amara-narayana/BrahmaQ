@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrahmaQ — Quantum-Topological Molecular Certification Engine</title>
+  <meta name="description" content="Professional dashboard and visualizer for BrahmaQ (Q-TMCE): Hybrid topological filtration, symmetry-protected VQE, zero-noise extrapolation, and cryptographic lattice commitments.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body class="dark-theme">
+  <!-- Subtle Quantum Background Aura -->
+  <div class="quantum-bg-grid" aria-hidden="true"></div>
+  <div class="quantum-glow-orb glow-top-left" aria-hidden="true"></div>
+  <div class="quantum-glow-orb glow-bottom-right" aria-hidden="true"></div>
+
+  <!-- Main Application Wrapper -->
+  <div class="app-layout">
+    
+    <!-- Top Global Header -->
+    <header class="app-header" id="mainHeader">
+      <div class="header-branding">
+        <div class="quantum-logo-mark" aria-hidden="true">
+          <div class="atom-core"></div>
+          <div class="orbit-ring ring-1"></div>
+          <div class="orbit-ring ring-2"></div>
+          <div class="orbit-ring ring-3"></div>
+        </div>
+        <div class="branding-text">
+          <div class="title-row">
+            <h1 class="brand-title">BrahmaQ <span class="brand-sub">Q-TMCE</span></h1>
+            <span class="badge-tag version-badge">v1.0.0</span>
+            <span class="badge-tag status-badge-online" id="serverStatusBadge">
+              <span class="pulsing-dot"></span> System Live
+            </span>
+          </div>
+          <p class="brand-caption">Quantum-Topological Molecular Certification Engine</p>
+        </div>
+      </div>
+
+      <!-- Presets Selector -->
+      <div class="header-presets" aria-label="Molecular Benchmark Presets">
+        <span class="preset-label">Presets:</span>
+        <button type="button" class="preset-chip active" id="presetH2Equil" data-preset="h2_equil">H₂ (0.735Å)</button>
+        <button type="button" class="preset-chip" id="presetH2Stretched" data-preset="h2_stretched">H₂ Dissoc. (3.0Å)</button>
+        <button type="button" class="preset-chip" id="presetHeH" data-preset="heh_plus">HeH⁺ (0.772Å)</button>
+        <button type="button" class="preset-chip" id="presetBenzene" data-preset="benzene_ring">Ring Obstruct (β₁>0)</button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="header-actions">
+        <button type="button" class="btn btn-secondary" id="btnOpenTerminal" title="View formatted terminal report">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          CLI Report
+        </button>
+        <button type="button" class="btn btn-secondary" id="btnOpenJsonModal" title="Inspect full JSON artifact">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          JSON Artifact
+        </button>
+        <button type="button" class="btn btn-primary btn-glow" id="btnRunSimulation" title="Execute quantum-topological pipeline">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          Run Engine
+        </button>
+      </div>
+    </header>
+
+    <!-- Cryptographic Certification Ribbon -->
+    <section class="certification-ribbon" id="certRibbon">
+      <div class="ribbon-glow-bar"></div>
+      <div class="ribbon-content">
+        <div class="cert-status-col">
+          <div class="cert-seal-icon" id="certSealIcon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg>
+          </div>
+          <div class="cert-label-group">
+            <span class="cert-status-title" id="certStatusTitle">CERTIFIED COMPUTATIONALLY TRACTABLE</span>
+            <span class="cert-proof-meta" id="certProofId">Proof ID: 332b6cde0ce04abab3d1575fe4725599 • Salted HMAC-SHA256</span>
+          </div>
+        </div>
+
+        <div class="cert-hash-col">
+          <span class="meta-label">Cryptographic Commitment Hash:</span>
+          <div class="hash-display-box" id="commitmentHashBox">
+            <code class="hash-text" id="certCommitmentHash">0x183fe303a63098dcf9cb049a6c706b28554c7ac4f753cca3ad114f7449e7e788</code>
+            <button type="button" class="btn-copy-hash" id="btnCopyHash" title="Copy commitment hash">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="cert-actions-col">
+          <button type="button" class="btn-tamper-pill" id="btnTestTamperQuick">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            Test Tamper Guard
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Top KPI Cards -->
+    <section class="kpi-grid" aria-label="Engine Performance Metrics">
+      <div class="kpi-card" id="kpiEnergyCard">
+        <div class="kpi-icon-wrap icon-cyan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-title">Ground State Energy</span>
+          <div class="kpi-value-row">
+            <span class="kpi-number" id="kpiEnergy">-1.137306</span>
+            <span class="kpi-unit">Ha</span>
+          </div>
+          <span class="kpi-footnote" id="kpiFciComparison">Exact FCI: -1.137306 Ha (Δ < 2e-12)</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" id="kpiMitigationCard">
+        <div class="kpi-icon-wrap icon-amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-title">ZNE Noise Error Reduction</span>
+          <div class="kpi-value-row">
+            <span class="kpi-number highlight-amber" id="kpiErrorReduction">85.51%</span>
+            <span class="kpi-subpill" id="kpiMitigationMethod">Linear Fit</span>
+          </div>
+          <span class="kpi-footnote" id="kpiRichardsonFootnote">Richardson recovers up to 99.40%</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" id="kpiTopologyCard">
+        <div class="kpi-icon-wrap icon-violet">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-title">Topological Filtration</span>
+          <div class="kpi-value-row">
+            <span class="kpi-number highlight-green" id="kpiTopologyStatus">PASS</span>
+            <span class="kpi-subpill" id="kpiBettiSignature">β=(1, 0, 0)</span>
+          </div>
+          <span class="kpi-footnote" id="kpiEntropyFootnote">Entropy: 0.00 (Threshold: 0.50)</span>
+        </div>
+      </div>
+
+      <div class="kpi-card" id="kpiQubitsCard">
+        <div class="kpi-icon-wrap icon-emerald">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-title">Qubit Reduction</span>
+          <div class="kpi-value-row">
+            <span class="kpi-number highlight-cyan" id="kpiQubitCompression">4 → 2</span>
+            <span class="kpi-unit">Qubits</span>
+          </div>
+          <span class="kpi-footnote" id="kpiMapperLabel">ParityMapper + ℤ₂ Symmetry</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="app-tab-nav" aria-label="Dashboard Sections">
+      <button type="button" class="tab-btn active" id="tabBtnOverview" data-tab="tabOverview">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        Pipeline Overview
+      </button>
+      <button type="button" class="tab-btn" id="tabBtnTopology" data-tab="tabTopology">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        3D Geometry & Homology
+      </button>
+      <button type="button" class="tab-btn" id="tabBtnQuantum" data-tab="tabQuantum">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        Symmetry-Protected VQE
+      </button>
+      <button type="button" class="tab-btn" id="tabBtnMitigation" data-tab="tabMitigation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        ZNE Error Mitigation
+      </button>
+      <button type="button" class="tab-btn" id="tabBtnVerifier" data-tab="tabVerifier">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        Cryptographic Verifier
+      </button>
+      <button type="button" class="tab-btn" id="tabBtnConfig" data-tab="tabConfig">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        Configuration
+      </button>
+    </nav>
+
+    <!-- Main Content Tab Containers -->
+    <main class="app-main-content">
+
+      <!-- TAB 1: PIPELINE OVERVIEW -->
+      <section class="tab-pane active" id="tabOverview">
+        <!-- Flowchart Cards -->
+        <div class="pipeline-flow-wrapper">
+          <div class="pipeline-stage-card" id="stage1Card">
+            <div class="stage-step-badge">Phase 01</div>
+            <div class="stage-header">
+              <h3 class="stage-name">SMILES & 3D Geometry</h3>
+              <span class="stage-status-pill status-pass" id="stage1Status">Validated</span>
+            </div>
+            <p class="stage-desc">RDKit builds Euclidean atomic point coordinates with conformer optimization.</p>
+            <div class="stage-meta-tags">
+              <span class="tag" id="tagSmiles">SMILES: [H][H]</span>
+              <span class="tag" id="tagBondLength">R = 0.7348 Å</span>
+              <span class="tag" id="tagAtoms">Atoms: 2 (H, H)</span>
+            </div>
+          </div>
+
+          <div class="pipeline-connector-line"><div class="connector-arrow"></div></div>
+
+          <div class="pipeline-stage-card" id="stage2Card">
+            <div class="stage-step-badge">Phase 02</div>
+            <div class="stage-header">
+              <h3 class="stage-name">Topological Filter</h3>
+              <span class="stage-status-pill status-pass" id="stage2Status">Tractable</span>
+            </div>
+            <p class="stage-desc">Vietoris–Rips persistent homology detects connectivity, cycles, and entropy.</p>
+            <div class="stage-meta-tags">
+              <span class="tag" id="tagEntropy">Entropy: 0.00</span>
+              <span class="tag" id="tagBetti">β₀=1, β₁=0, β₂=0</span>
+              <span class="tag" id="tagGudhi">GUDHI: Verified</span>
+            </div>
+          </div>
+
+          <div class="pipeline-connector-line"><div class="connector-arrow"></div></div>
+
+          <div class="pipeline-stage-card" id="stage3Card">
+            <div class="stage-step-badge">Phase 03</div>
+            <div class="stage-header">
+              <h3 class="stage-name">Symmetry VQE</h3>
+              <span class="stage-status-pill status-pass" id="stage3Status">Converged</span>
+            </div>
+            <p class="stage-desc">Hartree-Fock + UCCSD ansatz with per-iteration barren plateau monitoring.</p>
+            <div class="stage-meta-tags">
+              <span class="tag" id="tagQubits">2 Qubits (Parity)</span>
+              <span class="tag" id="tagOptimizer">L_BFGS_B (6 iters)</span>
+              <span class="tag" id="tagPlateau">Plateau: None</span>
+            </div>
+          </div>
+
+          <div class="pipeline-connector-line"><div class="connector-arrow"></div></div>
+
+          <div class="pipeline-stage-card" id="stage4Card">
+            <div class="stage-step-badge">Phase 04</div>
+            <div class="stage-header">
+              <h3 class="stage-name">ZNE & Commitment</h3>
+              <span class="stage-status-pill status-pass" id="stage4Status">Sealed</span>
+            </div>
+            <p class="stage-desc">Gate folding extrapolation removes noise error; result committed with salted HMAC.</p>
+            <div class="stage-meta-tags">
+              <span class="tag" id="tagZneGain">ZNE: +85.5% Gain</span>
+              <span class="tag" id="tagFciDiff">FCI Δ: 1.9e-12 Ha</span>
+              <span class="tag" id="tagProofStatus">Tamper: Verified</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2-Column Overview Details Grid -->
+        <div class="overview-details-grid">
+          <!-- Left: Verification Certificate -->
+          <div class="panel-card cert-summary-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                Engine Certification Record
+              </h3>
+              <span class="timestamp-tag" id="certTimestamp">2026-10-16T09:36:33Z</span>
+            </div>
+            <div class="panel-body">
+              <div class="cert-spec-table">
+                <div class="spec-row">
+                  <span class="spec-name">Target Molecule</span>
+                  <span class="spec-val" id="specMolecule">Hydrogen Gas (H₂)</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-name">Calculated Raw Energy ⟨H⟩</span>
+                  <span class="spec-val font-mono" id="specRawEnergy">-1.098237 Ha</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-name">Mitigated Ground Energy (ZNE)</span>
+                  <span class="spec-val font-mono highlight-amber" id="specMitigatedEnergy">-1.131645 Ha</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-name">Exact Full-CI Reference</span>
+                  <span class="spec-val font-mono highlight-emerald" id="specFciEnergy">-1.137306 Ha</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-name">Total Noise Error Recovered</span>
+                  <span class="spec-val font-mono highlight-cyan" id="specNoiseRecovered">85.5114% (Linear Fit)</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-name">Cryptographic Commitment Scheme</span>
+                  <span class="spec-val">Salted HMAC-SHA256 (32-byte salt)</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-name">Proof Identifier</span>
+                  <span class="spec-val font-mono text-xs" id="specProofId">332b6cde0ce04abab3d1575fe4725599</span>
+                </div>
+                <div class="spec-row">
+                  <span class="spec-name">Commitment Digest</span>
+                  <span class="spec-val font-mono text-xs highlight-cyan" id="specCommitmentDigest">0x183fe303a63098dcf9cb049a6c706b28554c7ac4f753cca3ad114f7449e7e788</span>
+                </div>
+              </div>
+
+              <div class="cert-verification-callout">
+                <div class="verification-badge-box">
+                  <span class="verification-label">SELF-VERIFICATION TEST:</span>
+                  <span class="verification-status valid" id="overviewTamperBadge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    PASS — UNALTERED (Tamper Test Rejected Altered State)
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Architecture & Executive Summary -->
+          <div class="panel-card engine-highlights-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                Hybrid Architecture Highlights
+              </h3>
+              <span class="engine-badge">Quantum-Classical Co-Design</span>
+            </div>
+            <div class="panel-body">
+              <div class="feature-bullets">
+                <div class="feature-bullet-item">
+                  <div class="bullet-icon icon-cyan">1</div>
+                  <div class="bullet-content">
+                    <h4>Topological Pre-Filter (Fail-Fast)</h4>
+                    <p>Prevents costly quantum simulator execution on obstructed or geometrically disjoint configurations using normalized persistence entropy.</p>
+                  </div>
+                </div>
+
+                <div class="feature-bullet-item">
+                  <div class="bullet-icon icon-emerald">2</div>
+                  <div class="bullet-content">
+                    <h4>Symmetry-Protected Qubit Compression</h4>
+                    <p>Uses Parity Mapping + ℤ₂ particle/spin symmetry to reduce 4 spin-orbitals directly to 2 qubits, eliminating unphysical Hilbert subspace exploration.</p>
+                  </div>
+                </div>
+
+                <div class="feature-bullet-item">
+                  <div class="bullet-icon icon-amber">3</div>
+                  <div class="bullet-content">
+                    <h4>Barren Plateau Guard & ZNE Mitigation</h4>
+                    <p>Monitors optimizer gradient norm ||∇C|| on every evaluation to abort if landscapes flatten, then applies unitary gate folding (λ = 1, 3, 5) to extrapolate λ=0.</p>
+                  </div>
+                </div>
+
+                <div class="feature-bullet-item">
+                  <div class="bullet-icon icon-violet">4</div>
+                  <div class="bullet-content">
+                    <h4>Audit-Ready Cryptographic Seal</h4>
+                    <p>Produces an immutable digital proof of tractability and energy without exposing secret internal parameters.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: 3D GEOMETRY & TOPOLOGICAL FILTRATION -->
+      <section class="tab-pane" id="tabTopology">
+        <div class="two-col-layout">
+          <!-- Left: 3D Interactive Canvas -->
+          <div class="panel-card canvas-panel">
+            <div class="panel-header">
+              <div class="title-with-controls">
+                <h3 class="panel-title">Interactive Molecular Point Cloud</h3>
+                <span class="panel-tag" id="currentMoleculeTag">H₂ (d = 0.7348 Å)</span>
+              </div>
+              <div class="canvas-action-row">
+                <button type="button" class="btn-micro" id="btnResetView" title="Reset 3D camera">Reset View</button>
+                <button type="button" class="btn-micro" id="btnToggleSpin" title="Toggle automatic rotation">Pause Spin</button>
+              </div>
+            </div>
+            
+            <div class="canvas-container" id="molCanvasContainer">
+              <canvas id="molecule3DCanvas" width="600" height="420"></canvas>
+              <div class="canvas-overlay-stats">
+                <span id="canvasCoordsText">Atom 1: (0, 0, -0.3674) | Atom 2: (0, 0, 0.3674)</span>
+              </div>
+            </div>
+
+            <!-- Vietoris-Rips Filtration Slider -->
+            <div class="filtration-control-box">
+              <div class="slider-header-row">
+                <label for="filtrationRadiusSlider" class="slider-label">
+                  <strong>Vietoris-Rips Filtration Radius (r):</strong>
+                  <span class="slider-val font-mono highlight-cyan" id="filtrationRadiusValue">1.400 Å</span>
+                </label>
+                <span class="ref-scale-tag">Ref Scale: 1.4 Å</span>
+              </div>
+              <input type="range" id="filtrationRadiusSlider" min="0.0" max="3.0" step="0.05" value="1.4" class="custom-slider">
+              <div class="slider-ticks">
+                <span>0.0 Å (Points)</span>
+                <span>0.735 Å (Bond)</span>
+                <span>1.4 Å (Ref Scale)</span>
+                <span>3.0 Å (Connected)</span>
+              </div>
+              <p class="slider-hint">Slide to watch Vietoris–Rips simplices form as filtration radius increases: 0-simplices (vertices) join into 1-simplices (edges).</p>
+            </div>
+          </div>
+
+          <!-- Right: Topological Invariants & Diagnostics -->
+          <div class="panel-card topology-diagnostics-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">Persistent Homology Diagnostics</h3>
+              <span class="badge-tag status-badge-pass" id="topoResultBadge">Tractable</span>
+            </div>
+            <div class="panel-body">
+              <!-- Invariants Grid -->
+              <div class="metrics-grid">
+                <div class="metric-box">
+                  <span class="metric-lbl">Betti Number β₀</span>
+                  <span class="metric-num highlight-cyan" id="metricBeta0">1</span>
+                  <span class="metric-sub">Connected Components</span>
+                </div>
+                <div class="metric-box">
+                  <span class="metric-lbl">Betti Number β₁</span>
+                  <span class="metric-num highlight-violet" id="metricBeta1">0</span>
+                  <span class="metric-sub">1-D Cycles / Rings</span>
+                </div>
+                <div class="metric-box">
+                  <span class="metric-lbl">Betti Number β₂</span>
+                  <span class="metric-num highlight-amber" id="metricBeta2">0</span>
+                  <span class="metric-sub">2-D Cavities</span>
+                </div>
+                <div class="metric-box">
+                  <span class="metric-lbl">Persistence Entropy</span>
+                  <span class="metric-num highlight-emerald" id="metricEntropy">0.0000</span>
+                  <span class="metric-sub">Mode: Normalized (&lt; 0.5)</span>
+                </div>
+              </div>
+
+              <!-- Barcode / Persistence Canvas -->
+              <div class="barcode-container">
+                <h4 class="subheading">Persistence Barcode Diagram</h4>
+                <canvas id="barcodeCanvas" width="500" height="150" class="mini-chart"></canvas>
+                <div class="barcode-legend">
+                  <span class="legend-item"><span class="legend-dot dot-cyan"></span> Dim 0 (β₀ components)</span>
+                  <span class="legend-item"><span class="legend-dot dot-violet"></span> Dim 1 (β₁ cycles)</span>
+                </div>
+              </div>
+
+              <!-- GUDHI Cross-Check Card -->
+              <div class="gudhi-crosscheck-box">
+                <div class="crosscheck-header">
+                  <span class="crosscheck-title">GUDHI SimplexTree Cross-Check</span>
+                  <span class="crosscheck-status valid" id="gudhiAgreesStatus">✓ β₀ AGREES</span>
+                </div>
+                <p class="crosscheck-text" id="gudhiDetailsText">
+                  Backend: gudhi 3.9.0 • Complex: RipsComplex(max_edge_length=1.4) • 3 Simplices constructed.
+                </p>
+              </div>
+
+              <!-- Atom XYZ Table -->
+              <div class="xyz-table-box">
+                <h4 class="subheading">Nuclear Coordinates (XYZ)</h4>
+                <div class="table-scroll">
+                  <table class="data-table" id="xyzTable">
+                    <thead>
+                      <tr><th>Index</th><th>Element</th><th>X (Å)</th><th>Y (Å)</th><th>Z (Å)</th></tr>
+                    </thead>
+                    <tbody id="xyzTableBody">
+                      <tr><td>0</td><td>H</td><td>0.0000</td><td>0.0000</td><td>-0.3674</td></tr>
+                      <tr><td>1</td><td>H</td><td>0.0000</td><td>0.0000</td><td>+0.3674</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: QUANTUM SIMULATION & VQE -->
+      <section class="tab-pane" id="tabQuantum">
+        <div class="two-col-layout">
+          <!-- Left: VQE Convergence Graph -->
+          <div class="panel-card chart-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">VQE Optimization Trajectory</h3>
+              <div class="chart-controls">
+                <span class="panel-tag font-mono" id="vqeItersTag">Iterations: 6 (32 evaluations)</span>
+              </div>
+            </div>
+            <div class="chart-body">
+              <canvas id="vqeChartCanvas" width="600" height="320"></canvas>
+              <div class="chart-legend">
+                <span class="legend-item"><span class="legend-line line-cyan"></span> Cost Energy ⟨H⟩ (Ha)</span>
+                <span class="legend-item"><span class="legend-line line-amber"></span> Gradient Norm ||∇C||</span>
+              </div>
+            </div>
+            <div class="chart-footer-metrics">
+              <div class="footer-metric">
+                <span class="lbl">Initial ||∇C||:</span>
+                <span class="val font-mono" id="initialGradVal">0.4757</span>
+              </div>
+              <div class="footer-metric">
+                <span class="lbl">Final ||∇C||:</span>
+                <span class="val font-mono highlight-emerald" id="finalGradVal">3.31e-06</span>
+              </div>
+              <div class="footer-metric">
+                <span class="lbl">Plateau Threshold:</span>
+                <span class="val font-mono">1.0e-07 (Patience: 3)</span>
+              </div>
+              <div class="footer-metric">
+                <span class="lbl">Barren Plateau:</span>
+                <span class="val highlight-emerald" id="barrenPlateauDetected">NO (Free)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Hamiltonian & Ansatz Diagnostics -->
+          <div class="panel-card quantum-details-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">Hamiltonian & Ansatz Architecture</h3>
+              <span class="panel-tag font-mono">ParityMapper (2 Qubits)</span>
+            </div>
+            <div class="panel-body">
+              
+              <!-- Reduction Summary -->
+              <div class="quantum-summary-box">
+                <div class="reduction-diagram">
+                  <div class="reduction-step">
+                    <span class="step-num">4</span>
+                    <span class="step-lbl">Spin-Orbitals</span>
+                  </div>
+                  <div class="reduction-arrow">→</div>
+                  <div class="reduction-step">
+                    <span class="step-num">4</span>
+                    <span class="step-lbl">Fermionic Qubits</span>
+                  </div>
+                  <div class="reduction-arrow">→</div>
+                  <div class="reduction-step active">
+                    <span class="step-num">2</span>
+                    <span class="step-lbl">Parity Qubits</span>
+                  </div>
+                </div>
+                <p class="reduction-explanation">
+                  Two-qubit reduction is preserved via ℤ₂ symmetry on particle number and spin, eliminating the active search space by a factor of 4.
+                </p>
+              </div>
+
+              <!-- Pauli Strings Decomposition -->
+              <div class="pauli-section">
+                <h4 class="subheading">Qubit Operator Pauli Decomposition (5 Terms)</h4>
+                <div class="pauli-chips-grid" id="pauliChipsGrid">
+                  <div class="pauli-chip"><span class="chip-op font-mono">II</span><span class="chip-weight font-mono">-0.3276</span></div>
+                  <div class="pauli-chip"><span class="chip-op font-mono">IZ</span><span class="chip-weight font-mono">+0.3948</span></div>
+                  <div class="pauli-chip"><span class="chip-op font-mono">ZI</span><span class="chip-weight font-mono">-0.3948</span></div>
+                  <div class="pauli-chip"><span class="chip-op font-mono">ZZ</span><span class="chip-weight font-mono">-0.0113</span></div>
+                  <div class="pauli-chip"><span class="chip-op font-mono">XX</span><span class="chip-weight font-mono">+0.1813</span></div>
+                </div>
+              </div>
+
+              <!-- Variational Parameters Table -->
+              <div class="parameters-section">
+                <h4 class="subheading">UCCSD Optimized Parameters (t)</h4>
+                <table class="data-table">
+                  <thead>
+                    <tr><th>Parameter</th><th>Value (Radians)</th><th>Type</th></tr>
+                  </thead>
+                  <tbody id="vqeParametersBody">
+                    <tr><td>t[0]</td><td class="font-mono">-6.3525e-07</td><td>Single Excitation</td></tr>
+                    <tr><td>t[1]</td><td class="font-mono">-1.9586e-07</td><td>Single Excitation</td></tr>
+                    <tr><td>t[2]</td><td class="font-mono highlight-cyan">-0.111729</td><td>Double Excitation (Dominant)</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Classical Energy Comparison -->
+              <div class="energy-comparison-card">
+                <div class="comp-row">
+                  <span>Nuclear Repulsion Energy:</span>
+                  <span class="font-mono" id="nuclearRepulsionVal">+0.720165 Ha</span>
+                </div>
+                <div class="comp-row">
+                  <span>Restricted Hartree-Fock (RHF):</span>
+                  <span class="font-mono" id="rhfEnergyVal">-1.117008 Ha</span>
+                </div>
+                <div class="comp-row highlight-row">
+                  <span>Exact Classical FCI:</span>
+                  <span class="font-mono highlight-emerald" id="fciEnergyVal">-1.137306 Ha</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: ZNE ERROR MITIGATION -->
+      <section class="tab-pane" id="tabMitigation">
+        <div class="two-col-layout">
+          <!-- Left: ZNE Extrapolation Plot -->
+          <div class="panel-card chart-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">Zero-Noise Extrapolation (ZNE) Fit</h3>
+              <div class="chart-controls">
+                <select id="selectExtrapolationFit" class="custom-select">
+                  <option value="linear" selected>Linear Fit (Default)</option>
+                  <option value="richardson">Richardson Extrapolation (99.4%)</option>
+                  <option value="exponential">Exponential Fit (Guarded)</option>
+                </select>
+              </div>
+            </div>
+            <div class="chart-body">
+              <canvas id="zneChartCanvas" width="600" height="320"></canvas>
+              <div class="chart-legend">
+                <span class="legend-item"><span class="legend-dot dot-amber"></span> Noisy Scale ⟨H⟩(λ)</span>
+                <span class="legend-item"><span class="legend-line line-cyan"></span> Extrapolation to λ=0</span>
+                <span class="legend-item"><span class="legend-dot dot-emerald"></span> Exact Classical (FCI)</span>
+              </div>
+            </div>
+            <div class="chart-footer-metrics">
+              <div class="footer-metric">
+                <span class="lbl">Raw Noisy ⟨H⟩ (λ=1):</span>
+                <span class="val font-mono" id="zneRawVal">-1.098237 Ha</span>
+              </div>
+              <div class="footer-metric">
+                <span class="lbl">Mitigated Value (λ=0):</span>
+                <span class="val font-mono highlight-amber" id="zneMitigatedVal">-1.131645 Ha</span>
+              </div>
+              <div class="footer-metric">
+                <span class="lbl">Fit Goodness (R²):</span>
+                <span class="val font-mono highlight-emerald" id="zneR2Val">0.999177</span>
+              </div>
+              <div class="footer-metric">
+                <span class="lbl">Noise Error Removed:</span>
+                <span class="val highlight-emerald" id="zneRecoveryPct">85.51%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Gate Folding & Physics Diagnostics -->
+          <div class="panel-card zne-details-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">Unitary Gate Folding Diagnostics</h3>
+              <span class="panel-tag font-mono">λ ∈ [1, 3, 5]</span>
+            </div>
+            <div class="panel-body">
+              
+              <!-- Gate Folding Schematic -->
+              <div class="folding-schematic-card">
+                <h4 class="subheading">Unitary Folding Equation</h4>
+                <div class="formula-box font-mono">
+                  U(λ) = U · (U† · U)<sup class="superscript">(λ-1)/2</sup>
+                </div>
+                <p class="formula-caption">
+                  Folds preserve quantum unitary physics identically (U†U = I) in the noiseless limit while deterministically inflating noise under the depolarizing channel.
+                </p>
+              </div>
+
+              <!-- Gate Scaling Table -->
+              <div class="gate-scaling-box">
+                <h4 class="subheading">Gate Count Inflation Scaling</h4>
+                <table class="data-table">
+                  <thead>
+                    <tr><th>Noise Scale (λ)</th><th>Total Transpiled Gates</th><th>Two-Qubit (CX) Gates</th><th>Measured Energy ⟨H⟩</th></tr>
+                  </thead>
+                  <tbody id="gateScalingBody">
+                    <tr><td>λ = 1 (1x)</td><td class="font-mono">21</td><td class="font-mono">4</td><td class="font-mono">-1.818402 Ha</td></tr>
+                    <tr><td>λ = 3 (3x)</td><td class="font-mono">63</td><td class="font-mono">12</td><td class="font-mono">-1.745860 Ha</td></tr>
+                    <tr><td>λ = 5 (5x)</td><td class="font-mono">105</td><td class="font-mono">20</td><td class="font-mono">-1.680188 Ha</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Noise Model Config -->
+              <div class="noise-model-info">
+                <div class="noise-item">
+                  <span class="noise-lbl">Single-Qubit Depolarizing Error:</span>
+                  <span class="noise-val font-mono">1.0e-03 (0.1%)</span>
+                </div>
+                <div class="noise-item">
+                  <span class="noise-lbl">Two-Qubit Depolarizing Error:</span>
+                  <span class="noise-val font-mono">1.0e-02 (1.0%)</span>
+                </div>
+                <div class="noise-item">
+                  <span class="noise-lbl">Evaluation Mode:</span>
+                  <span class="noise-val font-mono highlight-cyan">Density-Matrix Trace (Zero Shot-Noise)</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: CRYPTOGRAPHIC VERIFIER & TAMPER SANDBOX -->
+      <section class="tab-pane" id="tabVerifier">
+        <div class="two-col-layout">
+          <!-- Left: Official Certificate Card -->
+          <div class="panel-card certificate-card">
+            <div class="guilloche-border">
+              <div class="certificate-inner">
+                <div class="cert-watermark" aria-hidden="true">Q-TMCE</div>
+                
+                <div class="cert-top-header">
+                  <div class="cert-emblem">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  </div>
+                  <h2 class="cert-heading">CERTIFICATE OF QUANTUM COMPUTATIONAL TRACTABILITY</h2>
+                  <p class="cert-subtitle">ISSUED BY THE BRAHMAQ CERTIFICATION ENGINE (v1.0.0)</p>
+                </div>
+
+                <div class="cert-body-text">
+                  <p>This certifies that the molecular Hamiltonian corresponding to <strong>Hydrogen Gas (H₂)</strong> with SMILES <code class="inline-code">[H][H]</code> and internuclear distance <strong>0.7348 Å</strong> has been rigorously verified through algebraic topological filtration, simulated under symmetry-protected fermionic excitation (UCCSD), and mitigated against device depolarizing noise.</p>
+                </div>
+
+                <div class="cert-kv-grid">
+                  <div class="kv-item"><span class="k">Certified Ground Energy:</span><span class="v font-mono highlight-amber" id="certDispEnergy">-1.131645 Ha</span></div>
+                  <div class="kv-item"><span class="k">Exact Classical Bound:</span><span class="v font-mono highlight-emerald" id="certDispFci">-1.137306 Ha</span></div>
+                  <div class="kv-item"><span class="k">Error Reduction:</span><span class="v font-mono" id="certDispErrorRed">85.5114%</span></div>
+                  <div class="kv-item"><span class="k">Verification Status:</span><span class="v highlight-emerald" id="certDispStatus">VALID & AUDITABLE</span></div>
+                </div>
+
+                <div class="cert-footer-row">
+                  <div class="footer-seal-block">
+                    <span class="seal-title">HMAC-SHA256 PROOF COMMITMENT</span>
+                    <span class="seal-hash font-mono text-xs" id="certDispHash">0x183fe303a63098dcf9cb049a6c706b28554c7ac4f753cca3ad114f7449e7e788</span>
+                  </div>
+                  <div class="footer-sig-block">
+                    <div class="sig-line"></div>
+                    <span class="sig-lbl">Cryptographic Keystore Authority</span>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Interactive Tamper Testing Sandbox -->
+          <div class="panel-card tamper-sandbox-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path></svg>
+                Live Tamper-Proof Verification Sandbox
+              </h3>
+              <span class="panel-tag">Security Testing</span>
+            </div>
+            <div class="panel-body">
+              <p class="tamper-intro">
+                The cryptographic commitment seals the exact engine output with a 32-byte secret salt. Modify any payload field below and click <strong>Verify Integrity</strong> to test the tamper-evident guard.
+              </p>
+
+              <!-- Tamper Form Inputs -->
+              <div class="tamper-form">
+                <div class="form-row">
+                  <label for="tamperEnergyInput" class="form-label">Ground State Energy (Ha):</label>
+                  <input type="number" id="tamperEnergyInput" class="custom-input font-mono" value="-1.131645" step="0.0001">
+                </div>
+                <div class="form-row">
+                  <label for="tamperMoleculeInput" class="form-label">Molecule Name:</label>
+                  <input type="text" id="tamperMoleculeInput" class="custom-input" value="H2">
+                </div>
+                <div class="form-row">
+                  <label for="tamperProofIdInput" class="form-label">Proof ID:</label>
+                  <input type="text" id="tamperProofIdInput" class="custom-input font-mono text-xs" value="332b6cde0ce04abab3d1575fe4725599">
+                </div>
+              </div>
+
+              <!-- Quick Tamper Actions -->
+              <div class="tamper-action-btns">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnSimulateTamper">
+                  ⚠️ Simulate +0.001 Ha Tamper
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnResetTamperPayload">
+                  ↺ Reset to Original
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnRunVerification">
+                  🛡️ Verify Integrity
+                </button>
+              </div>
+
+              <!-- Live Verification Result Card -->
+              <div class="verification-live-result" id="liveVerificationResultBox">
+                <div class="live-result-header">
+                  <span class="live-result-title">Verification Engine Verdict:</span>
+                  <span class="status-badge-pass" id="liveVerdictBadge">VERIFIED OK</span>
+                </div>
+                <div class="verdict-details" id="liveVerdictDetails">
+                  Payload commitment matches stored secret salt HMAC hash identically. Zero tampering detected.
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: CONFIGURATION & SIMULATION RUNNER -->
+      <section class="tab-pane" id="tabConfig">
+        <div class="panel-card config-panel">
+          <div class="panel-header">
+            <h3 class="panel-title">Engine Configuration & Run Parameters</h3>
+            <div class="config-actions">
+              <button type="button" class="btn btn-secondary btn-sm" id="btnResetConfig">Reset Defaults</button>
+              <button type="button" class="btn btn-primary btn-sm" id="btnExecuteCustomRun">Execute Simulation</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            
+            <form id="engineConfigForm" class="config-form-grid">
+              
+              <!-- Col 1: Molecule & Chemistry -->
+              <div class="config-section">
+                <h4 class="config-sec-title">Molecule & Basis</h4>
+                <div class="form-group">
+                  <label for="cfgSmiles">SMILES String</label>
+                  <input type="text" id="cfgSmiles" name="smiles" class="custom-input font-mono" value="[H][H]">
+                </div>
+                <div class="form-group">
+                  <label for="cfgBondLength">Bond Length (Å)</label>
+                  <input type="number" id="cfgBondLength" name="bond_length" class="custom-input font-mono" value="0.7348" step="0.001">
+                </div>
+                <div class="form-group">
+                  <label for="cfgBasis">Basis Set</label>
+                  <select id="cfgBasis" name="basis" class="custom-select">
+                    <option value="sto3g" selected>STO-3G (Standard)</option>
+                    <option value="6-31g">6-31G</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="cfgDriver">Electronic Driver</label>
+                  <select id="cfgDriver" name="driver" class="custom-select">
+                    <option value="auto" selected>Auto (PySCF with fallback)</option>
+                    <option value="minimal">Minimal STO-3G Fallback</option>
+                    <option value="pyscf">PySCF Production Backend</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Col 2: Topology Settings -->
+              <div class="config-section">
+                <h4 class="config-sec-title">Topological Filtration</h4>
+                <div class="form-group">
+                  <label for="cfgEntropyThreshold">Entropy Threshold</label>
+                  <input type="number" id="cfgEntropyThreshold" name="entropy_threshold" class="custom-input font-mono" value="0.5" step="0.05">
+                </div>
+                <div class="form-group">
+                  <label for="cfgEntropyMode">Entropy Mode</label>
+                  <select id="cfgEntropyMode" name="entropy_mode" class="custom-select">
+                    <option value="normalized" selected>Normalized (E / log n)</option>
+                    <option value="raw">Raw Entropy</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="cfgRefScale">Reference Scale (Å)</label>
+                  <input type="number" id="cfgRefScale" name="reference_scale" class="custom-input font-mono" value="1.4" step="0.1">
+                </div>
+                <div class="form-group">
+                  <label for="cfgProminence">Prominence Threshold</label>
+                  <input type="number" id="cfgProminence" name="prominence" class="custom-input font-mono" value="0.3" step="0.05">
+                </div>
+              </div>
+
+              <!-- Col 3: Quantum & Optimizer -->
+              <div class="config-section">
+                <h4 class="config-sec-title">Quantum & Optimizer</h4>
+                <div class="form-group">
+                  <label for="cfgOptimizer">VQE Optimizer</label>
+                  <select id="cfgOptimizer" name="optimizer" class="custom-select">
+                    <option value="L_BFGS_B" selected>L_BFGS_B (Gradient Descent)</option>
+                    <option value="SPSA">SPSA (Stochastic)</option>
+                    <option value="COBYLA">COBYLA</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="cfgMaxIter">Max Iterations</label>
+                  <input type="number" id="cfgMaxIter" name="maxiter" class="custom-input font-mono" value="1000">
+                </div>
+                <div class="form-group">
+                  <label for="cfgTwoQubitRed">Two-Qubit Reduction</label>
+                  <select id="cfgTwoQubitRed" name="two_qubit_reduction" class="custom-select">
+                    <option value="true" selected>Enabled (4 → 2 Qubits)</option>
+                    <option value="false">Disabled (Full Space)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="cfgGradThresh">Barren Plateau Gradient Threshold</label>
+                  <input type="number" id="cfgGradThresh" name="gradient_threshold" class="custom-input font-mono" value="0.0000001" step="0.00000001">
+                </div>
+              </div>
+
+              <!-- Col 4: Mitigation & Error Rates -->
+              <div class="config-section">
+                <h4 class="config-sec-title">Error Mitigation (ZNE)</h4>
+                <div class="form-group">
+                  <label for="cfgExtrapolation">Extrapolation Fit</label>
+                  <select id="cfgExtrapolation" name="extrapolation" class="custom-select">
+                    <option value="linear" selected>Linear (Default Spec)</option>
+                    <option value="richardson">Richardson (Optimal 99.4%)</option>
+                    <option value="exponential">Exponential (Guarded)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="cfgSingleError">Single-Qubit Error Rate</label>
+                  <input type="number" id="cfgSingleError" name="single_qubit_error" class="custom-input font-mono" value="0.001" step="0.0005">
+                </div>
+                <div class="form-group">
+                  <label for="cfgTwoError">Two-Qubit Error Rate</label>
+                  <input type="number" id="cfgTwoError" name="two_qubit_error" class="custom-input font-mono" value="0.01" step="0.005">
+                </div>
+                <div class="form-group">
+                  <label for="cfgNoiseScales">Noise Folding Scales</label>
+                  <input type="text" id="cfgNoiseScales" name="scales" class="custom-input font-mono" value="[1, 3, 5]">
+                </div>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Global Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span>BrahmaQ (Q-TMCE) — Hybrid Quantum-Classical Molecular Certification</span>
+      </div>
+      <div class="footer-right">
+        <a href="https://github.com/amara-narayana/BrahmaQ" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub Repository</a>
+        <span class="sep">•</span>
+        <button type="button" class="footer-btn" id="btnFooterReport">Terminal Report</button>
+        <span class="sep">•</span>
+        <button type="button" class="footer-btn" id="btnFooterJson">JSON Artifact</button>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- MODAL 1: Terminal Report Modal -->
+  <div class="modal-backdrop" id="terminalModal" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          <h3>Official Engine CLI Report</h3>
+        </div>
+        <button type="button" class="modal-close-btn" id="btnCloseTerminalModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="terminal-window">
+          <div class="terminal-topbar">
+            <span class="terminal-dot red"></span>
+            <span class="terminal-dot yellow"></span>
+            <span class="terminal-dot green"></span>
+            <span class="terminal-title">python -m src.main</span>
+            <button type="button" class="btn-terminal-copy" id="btnCopyTerminalText">Copy Text</button>
+          </div>
+          <pre class="terminal-output" id="terminalReportContent">Loading report...</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: JSON Artifact Inspector Modal -->
+  <div class="modal-backdrop" id="jsonModal" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+          <h3>JSON Run Artifact Inspector (<span class="font-mono text-sm">qtmce_result.json</span>)</h3>
+        </div>
+        <div class="modal-header-actions">
+          <button type="button" class="btn btn-secondary btn-sm" id="btnDownloadJson">Download File</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnCopyJson">Copy JSON</button>
+          <button type="button" class="modal-close-btn" id="btnCloseJsonModal">&times;</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="json-viewer-container">
+          <pre class="json-code-block" id="jsonArtifactViewer">Loading JSON artifact...</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

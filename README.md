@@ -47,6 +47,24 @@ python -m src.main --extrapolation richardson   # best measured mitigation
 python tests/test_smoke.py             # 23 behavioural tests, no pytest needed
 ```
 
+## Interactive Web Dashboard
+
+Launch the rich web interface:
+
+```bash
+python run_ui.py                       # starts local server and opens http://127.0.0.1:8080/
+# or manually:
+python -m src.web.server --port 8080
+```
+
+The dashboard includes:
+* **3D Point Cloud & Vietoris-Rips Filtration**: Dynamic 3D atom view and interactive filtration radius slider to visualize persistent simplices.
+* **Topological Invariants & Barcode**: Betti numbers ($\beta_0, \beta_1, \beta_2$), normalized entropy, and GUDHI SimplexTree verification.
+* **Symmetry-Protected VQE Convergence**: Optimization trajectory chart tracking energy and gradient norm $\|\nabla C\|$ with barren plateau detection.
+* **ZNE Error Mitigation Curves**: Gate folding ($\lambda = 1, 3, 5$) with Linear, Richardson, and Exponential zero-noise extrapolation.
+* **Cryptographic Tamper-Proof Sandbox**: Interactive verification and tamper simulation over the HMAC-SHA256 commitment.
+* **Benchmark Presets & CLI Report**: One-click switching between $H_2$, $HeH^+$, and Benzene ring obstruction, plus live CLI reports and JSON export.
+
 Output: the report on stdout, plus
 [`artifacts/qtmce_result.json`](artifacts/qtmce_result.json) (full diagnostics)
 and `artifacts/zkp_keystore.json` (the simulated secret store holding the
