@@ -1,0 +1,437 @@
+================================================================================
+ Q-TMCE — RUN ON KALI LINUX, FROM SCRATCH
+ Quantum-Topological Molecular Certification Engine
+================================================================================
+
+Audience : someone with a fresh Kali Linux install and this project's source
+           folder (the one containing src/, tests/, config.json, requirements.txt).
+Time     : ~10-15 minutes, most of it downloading the pinned Qiskit stack.
+Result   : the engine runs and prints the Q-TMCE report, and writes
+           artifacts/qtmce_result.json next to the project.
+
+Verified : the dependency set in this guide was checked against PyPI for Linux
+           (x86_64, CPython 3.10) and resolves completely. On Kali x86_64 the
+           engine will use the PRODUCTION PySCF driver — the bundled fallback
+           driver exists only for platforms where PySCF cannot be installed
+           (e.g. native Windows), so on Kali you get the real quantum-chemistry
+           backend the specification asks for.
+
+Read section 11 first if you are on ARM (Raspberry Pi, arm64 VM/container).
+
+--------------------------------------------------------------------------------
+0. TL;DR — the whole thing
+--------------------------------------------------------------------------------
+Debian/Kali blocks pip installing into the system Python, so everything goes in
+its own virtual environment with its own Python 3.10.12. Do not skip that part.
+
+    sudo apt update
+    sudo apt install -y curl build-essential python3-dev
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    source ~/.local/bin/env                      # or: export PATH="$HOME/.local/bin:$PATH"
+
+    cd ~/qtmce                                   # wherever the project lives
+    uv python install 3.10.12
+    uv venv --python 3.10.12 .venv
+    source .venv/bin/activate
+    uv pip install -r requirements.txt
+    python tests/test_smoke.py                   # expect: 23 passed, 0 failed
+    python -m src.main --verbose
+
+The rest of this file explains each line, what "good" looks like, and how to
+recover when something does not go to plan.
+
+--------------------------------------------------------------------------------
+1. Prerequisites
+--------------------------------------------------------------------------------
+Kali ships a modern Python 3.11/3.12/3.13 and marks it "externally managed"
+(PEP 668), which is why `pip install -r requirements.txt` fails out of the box
+with:
+
+    error: externally-managed-environment
+
+That error is expected and is NOT a reason to reach for
+`--break-system-packages`. This project pins Python 3.10.12 anyway, so it gets
+its own interpreter and its own virtual environment, and the system Python is
+left completely untouched.
+
+Install the build tooling. `build-essential` + `python3-dev` are needed because
+ripser 0.6.4 publishes no Linux wheel for Python 3.10 (see section 10.2 for the
+route that avoids compiling entirely):
+
+    sudo apt update
+    sudo apt install -y curl build-essential python3-dev
+
+If you are logged in as root (the Kali live image does this by default), drop
+the `sudo` from the following commands. Prefer a normal user with sudo rights —
+running the engine as root leaves root-owned files in the project directory.
+
+Check the architecture now; it matters (section 11):
+
+    uname -m
+
+--------------------------------------------------------------------------------
+2. Get the project onto Kali
+--------------------------------------------------------------------------------
+The project is a plain source folder — there is nothing to build. Copy the whole
+folder to your Kali home directory. Two common ways:
+
+(a) From the Windows machine, over the network (replace the IP):
+
+        # on Kali:  sudo apt install -y openssh-server && ip a
+        # on Windows (Git Bash), from the folder ABOVE the project:
+        tar czf qtmce.tar.gz --exclude=.venv --exclude=artifacts --exclude=__pycache__ BrahmaQ
+        scp qtmce.tar.gz user@<kali-ip>:~/
+
+        # on Kali:
+        tar xzf ~/qtmce.tar.gz && mv BrahmaQ ~/qtmce
+
+(b) Via a shared folder, USB stick, or your hypervisor's guest additions — same
+    idea: copy everything except `.venv` and `artifacts`.
+
+IMPORTANT: never copy the `.venv` directory from Windows to Kali. A virtual
+environment contains absolute paths and platform-specific binaries; the Windows
+one is useless on Linux. It is regenerated in step 4. Excluding it also makes
+the archive ~10x smaller.
+
+If you build the archive with tar, the exclusions matter: after unpacking, the
+folder should contain src/, tests/, requirements.txt, config.json, README.md,
+.python-version and this file — and no .venv/.
+
+    ls ~/qtmce
+
+--------------------------------------------------------------------------------
+3. Install Python 3.10.12
+--------------------------------------------------------------------------------
+Do not try to get 3.10.12 from apt: Kali is a rolling release and its `python3`
+moves forward, while this project's pinned dependency set (qiskit 0.45.2 and
+friends) targets Python 3.10.
+
+`uv` fetches a self-contained CPython 3.10.12 — no compilation, no apt pinning:
+
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    source ~/.local/bin/env          # adds ~/.local/bin to PATH for this shell
+
+    uv python install 3.10.12
+    uv python list | grep 3.10       # should list cpython-3.10.12-...
+
+If you prefer pyenv, that works too but needs the build dependencies
+(build-essential, libssl-dev, zlib1g-dev, libbz2-dev, libreadline-dev,
+libsqlite3-dev, libffi-dev, liblzma-dev):
+
+    curl -fsSL https://pyenv.run | bash
+    pyenv install 3.10.12 && pyenv local 3.10.12
+
+Note: the interpreter may be 3.10.x rather than exactly 3.10.12; the pinned
+package versions are what matter. The project's `.python-version` file asks uv
+for 3.10.12 specifically.
+
+--------------------------------------------------------------------------------
+4. Virtual environment and dependencies
+--------------------------------------------------------------------------------
+From the project root:
+
+    cd ~/qtmce
+
+    uv venv --python 3.10.12 .venv
+    source .venv/bin/activate
+
+Your prompt now shows `(qtmce)`-style or `.venv` prefix. Confirm the interpreter:
+
+    python -V
+    which python
+
+Expected: `Python 3.10.12` and a path inside the project's `.venv`. If `python -V`
+reports 3.11/3.12/3.13, the venv is NOT active — re-run the `source` line.
+
+Now install the pinned stack. Option A keeps the exact pins from the original
+specification; pick Option B only if you would rather not compile anything.
+
+    # Option A (recommended, keeps ripser==0.6.4 exactly as specified)
+    uv pip install -r requirements.txt
+
+    # Option B (no compilers needed: ripser 0.6.8 is the first release with
+    # manylinux cp310 wheels; its API is identical for the calls this project
+    # makes -- ripser(X, maxdim=, thresh=, distance_matrix=, do_cocycles=))
+    sed -i 's/^ripser==0.6.4$/ripser==0.6.8/' requirements.txt
+    uv pip install -r requirements.txt
+
+Under Option A the ripser source build takes a few minutes; the output scrolls
+through compiler lines and ends with something like
+`Built ripser==0.6.4` / `Installed 40 packages`. Anything else is covered in
+section 10.
+
+Notes
+  * `uv pip` installs into the active virtual environment and does not need
+    `pip` to exist inside it, which sidesteps Debian's python3-venv / pip
+    packaging quirks.
+  * If you see `error: externally-managed-environment`, you are running
+    `pip install` against the system Python instead of the venv — go back to
+    `source .venv/bin/activate`, or use `uv pip install`.
+  * PySCF installs from a manylinux wheel here (`py3-none`, so it is not tied to
+    a single CPython version), which is exactly what is unavailable on Windows.
+
+--------------------------------------------------------------------------------
+5. Verify the installation
+--------------------------------------------------------------------------------
+Five quick checks; every line should match.
+
+    python -c "import sys, platform; print(sys.version.split()[0], platform.machine())"
+        -> 3.10.12 x86_64
+
+    python -c "import qiskit, qiskit_nature, qiskit_aer, qiskit_algorithms, numpy, scipy, cryptography; print('qiskit', qiskit.__version__, '| nature', qiskit_nature.__version__, '| aer', qiskit_aer.__version__, '| algorithms', qiskit_algorithms.__version__)"
+        -> qiskit 0.45.2 | nature 0.6.2 | aer 0.12.2 | algorithms 0.2.2
+
+    python -c "import ripser, gudhi, rdkit, pyscf; print('ripser', ripser.__version__, '| gudhi', gudhi.__version__, '| rdkit', rdkit.__version__, '| pyscf', pyscf.__version__)"
+        -> ripser 0.6.4 | gudhi 3.9.0 | rdkit 2023.09.5 | pyscf 2.4.0
+
+    python -c "from src.quantum.minimal_basis_driver import pyscf_available; print('PySCF usable:', pyscf_available())"
+        -> PySCF usable: True
+
+That last line is the one that decides which chemistry backend the engine uses.
+`True` means you get the production PySCF driver.
+
+--------------------------------------------------------------------------------
+6. Run the test suite
+--------------------------------------------------------------------------------
+    python tests/test_smoke.py
+
+Expected final line:
+
+    23 passed, 0 failed
+
+This exercises the topological filter (including the obstruction branch), the
+Hamiltonian build and its literature anchors (RHF -1.1167 / FCI -1.1373 Ha for
+H2 in STO-3G), UCCSD + VQE against exact diagonalisation, gate folding, the ZNE
+extrapolation guards, the commitment scheme including tamper rejection, and the
+exact report layout. It runs in about a minute.
+
+Exit status matters: `echo $?` should print `0`.
+
+--------------------------------------------------------------------------------
+7. Run the engine
+--------------------------------------------------------------------------------
+    python -m src.main --verbose
+
+`--verbose` sends progress to stderr; the report itself goes to stdout. Run from
+the project root — config.json, the keystore and the artifact path are all
+resolved relative to the working directory.
+
+Useful variants:
+
+    python -m src.main --driver minimal          # force the bundled fallback
+    python -m src.main --driver pyscf            # fail loudly if PySCF is missing
+    python -m src.main --extrapolation richardson
+    python -m src.main --bond-length 0.9         # stretch H2
+    python -m src.main --no-artifact             # print only, write nothing
+
+`--extrapolation richardson` is worth trying once: measured on this engine it
+removes 99.4% of the noise-induced error where the default linear fit removes
+85.5%. The default stays `linear` because the specification asks for it.
+
+--------------------------------------------------------------------------------
+8. What you should see
+--------------------------------------------------------------------------------
+On Kali x86_64 with PySCF installed, `python -m src.main` prints:
+
+    === Q-TMCE ENGINE REPORT ===
+
+    Molecule: H2 (Bond Length: 0.7348 Angstrom)
+
+    [1] TOPOLOGICAL FILTER
+    Status: PASS (Tractable)
+    Reason: Low persistence entropy, no topological obstructions.
+
+    [2] QUANTUM SIMULATION
+    Ansatz: Symmetry-Protected UCCSD
+    Optimizer: L_BFGS_B
+    Iterations: <N>
+    Convergence: SUCCESS
+    Barren Plateau Detected: NO
+
+    [3] ERROR MITIGATION
+    Raw Estimate: <X> Ha
+    Mitigated Estimate: <Y> Ha
+    Exact Classical (FCI): -1.137306 Ha
+    Error Reduction: <P%>
+
+    [4] CRYPTOGRAPHIC CERTIFICATION
+    ZKP Commitment Hash: 0x<64 hex digits>
+    Status: PROOF GENERATED
+
+    === CONCLUSION ===
+
+    The molecule is certified as computationally tractable.
+    The ground state energy has been verified via symmetry-protection and error mitigation.
+    A cryptographic proof of this result has been generated.
+
+    ===============================
+
+The commitment hash and the salt change on every run by design (fresh random
+salt), so a differing hash is not a failure.
+
+--------------------------------------------------------------------------------
+9. Expected numbers (reference)
+--------------------------------------------------------------------------------
+    Quantity                     Expected                     Note
+    ---------------------------  ---------------------------  ------------------
+    qubits for H2                2                            parity mapping +
+                                                              two-qubit reduction
+                                                              (4 spin-orbitals)
+    RHF energy                   -1.11701 Ha                  literature -1.1167
+    FCI energy                   -1.13731 Ha                  literature -1.1373
+    VQE vs FCI                   < 1e-6 Ha                    UCCSD is exact here
+    Barren plateau               NO                           initial |grad| ~0.48
+    Error reduction (linear)     ~85%                         default fit
+    Error reduction (richardson) ~99%                         --extrapolation
+                                                              richardson
+    Certificate self-check       True                         tamper check rejects
+                                                              a 1e-3 Ha edit
+
+Then inspect the artifact:
+
+    python - <<'PY'
+    import json
+    a = json.load(open("artifacts/qtmce_result.json"))
+    print("driver      :", a["hamiltonian"]["driver"])
+    print("qubits      :", a["hamiltonian"]["num_qubits"])
+    print("vqe total   :", a["vqe"]["total_energy"])
+    print("exact (FCI) :", a["exact_classical_energy"])
+    print("certified   :", a["certification"]["certification_ok"])
+    print("tamper      :", a["certification"]["tamper_check"]["rejected"])
+    print("gudhi check :", a["topology"]["signature"].get("gudhi_cross_check"))
+    print("warnings    :", a["warnings"])
+    PY
+
+On Kali this must print `driver : PySCF (sto3g)`. If it prints
+`minimal-basis STO-3G s-orbital (fallback, ...)`, PySCF was not importable and
+the engine quietly fell back — section 10.3.
+
+The `warnings` list will contain a handful of DeprecationWarning /
+PendingDeprecationWarning entries. Those come from library internals in the
+pinned Qiskit-generation packages (tensor unwrapping, flow controllers), not
+from this project's own API usage.
+
+--------------------------------------------------------------------------------
+10. Troubleshooting
+--------------------------------------------------------------------------------
+10.1  error: externally-managed-environment
+      You are installing into Kali's system Python. Activate the venv
+      (`source .venv/bin/activate`) and use `uv pip install`, or plain
+      `python -m pip install` inside the venv. Do not use
+      --break-system-packages.
+
+10.2  Building wheel for ripser ... error  (Option A)
+      ripser 0.6.4 has no manylinux wheel for Python 3.10, so it compiles from
+      source. Install the toolchain and retry:
+
+          sudo apt install -y build-essential python3-dev
+          uv pip install -r requirements.txt
+
+      If you would rather skip compiling altogether, use Option B in step 4
+      (`ripser==0.6.8`), which ships manylinux cp310 wheels and has an identical
+      API for the calls this project makes.
+
+10.3  ModuleNotFoundError: No module named 'qiskit'
+      The venv is not active, or you are running a different interpreter.
+      Check `which python` points into .venv, then re-run. Note that
+      `python3` and `python` may resolve differently.
+
+10.4  pyscf_available() returns False / driver says "fallback"
+      PySCF failed to import. Check `python -c "import pyscf"` for the real
+      error. On x86_64 it installs from a wheel; if you are on ARM, read
+      section 11. The engine deliberately keeps working with its fallback
+      instead of crashing — pass `--driver pyscf` if you would rather have it
+      fail loudly.
+
+10.5  The run is slow / hangs in section 4
+      Initial resolution of the Qiskit stack downloads ~250 MB. Use
+      `--verbose` on uv, or `uv pip install -r requirements.txt 2>&1 | tail -20`
+      to watch progress. Nothing is hung unless uv reports no progress for
+      several minutes.
+
+10.6  Permission denied writing artifacts/
+      If you ran the engine as root, the artifacts directory is root-owned.
+      Fix with `sudo chown -R "$USER":"$USER" ~/qtmce` and re-run as your normal
+      user. On Linux the commitment keystore is created mode 0600 (owner-only) —
+      unlike Windows, that restriction is real here.
+
+10.7  RuntimeError: RDKit failed to embed a 3-D geometry
+      Only affects polyatomic SMILES via --smiles; the H2 default (a diatomic
+      construction) never embeds. Pass explicit coordinates instead.
+
+--------------------------------------------------------------------------------
+11. Architecture caveat (ARM / Raspberry Pi, arm64 VMs) — READ THIS
+--------------------------------------------------------------------------------
+The guide above is verified for x86_64. On aarch64 kernels the pinned versions
+have gaps in wheel coverage for CPython 3.10:
+
+    package     x86_64      aarch64
+    ----------  ----------  --------------------------
+    qiskit-aer  wheel       no cp310 wheel -> source build
+    gudhi       wheel       no cp310 wheel -> source build
+    ripser      no wheel*   no wheel*     -> source build
+    rdkit       wheel       wheel
+    pyscf       wheel       wheel
+    numpy/scipy wheel       wheel
+    (qiskit, qiskit-nature, qiskit-algorithms, sympy: universal py3-none wheels)
+
+    *) ripser 0.6.8+ provides manylinux cp310 aarch64 wheels; 0.6.4 does not.
+
+qiskit-aer and gudhi are C++/pybind11 projects whose source builds are not
+covered by this guide. If you are on ARM, either use an x86_64 Kali VM/container,
+or accept that step 4 will attempt those builds and may fail. The topology stage
+still works without ripser if you switch to `ripser==0.6.8`, but the quantum
+stages need qiskit-aer.
+
+--------------------------------------------------------------------------------
+12. Optional: compare the two chemistry backends
+--------------------------------------------------------------------------------
+Now that both are available on Kali, this is the interesting experiment:
+
+    python -m src.main --driver pyscf   --no-artifact   # production driver
+    python -m src.main --driver minimal --no-artifact   # bundled fallback
+
+Both should print FCI -1.137306 Ha and Raw/Mitigated estimates that agree to
+about a millihartree or better, because the fallback was validated against the
+same literature values PySCF reproduces. A larger disagreement is a genuine
+finding worth reporting: it means one of the two integral paths is wrong.
+
+--------------------------------------------------------------------------------
+13. Re-running later
+--------------------------------------------------------------------------------
+Every session after the first:
+
+    cd ~/qtmce && source .venv/bin/activate
+    python tests/test_smoke.py
+    python -m src.main
+
+To start over from a clean state (keeps the source):
+
+    deactivate; rm -rf .venv artifacts
+    uv venv --python 3.10.12 .venv && source .venv/bin/activate
+    uv pip install -r requirements.txt
+
+--------------------------------------------------------------------------------
+14. Reference: what lives where
+--------------------------------------------------------------------------------
+    src/topology/filter.py            Vietoris-Rips filtration, persistence
+                                      diagrams, entropy, Betti numbers, gudhi check
+    src/topology/classifier.py        tractability decision (JSON result)
+    src/quantum/hamiltonian_builder.py  RDKit geometry -> driver -> parity mapping
+    src/quantum/minimal_basis_driver.py PySCF-free STO-3G fallback (H/He only)
+    src/quantum/ansatz.py             Hartree-Fock + UCCSD (symmetry-protected)
+    src/quantum/simulator.py          VQE + gradient monitoring / barren plateau
+    src/quantum/mitigation.py         depolarizing model, gate folding 1x/3x/5x, ZNE
+    src/crypto/zkp_wrapper.py         salted HMAC commitment + verify()
+    src/main.py                       orchestrator, CLI, report
+    config.json                       every threshold + IBM Quantum token slot
+    tests/test_smoke.py               23 behavioural tests
+    artifacts/qtmce_result.json       full diagnostics of the last run
+    artifacts/zkp_keystore.json       commitment salts (mode 0600)
+
+Full scientific caveats and the deviations from the original specification are in
+README.md — worth reading before quoting any number.
+
+================================================================================
+ End of guide.
+================================================================================

@@ -1,0 +1,60 @@
+# Q-TMCE — Quantum-Topological Molecular Certification Engine
+# ---------------------------------------------------------------------------
+# Interpreter: CPython 3.10.12  (pinned in .python-version, NOT pip-installable)
+#
+#   pyenv install 3.10.12 && pyenv local 3.10.12
+#   python -m venv .venv && . .venv/bin/activate
+#   pip install -r requirements.txt
+#
+# NOTE ON order: qiskit-nature 0.6.x dropped the legacy `qiskit_nature.drivers`
+# module (PyMolecule/PySCF legacy drivers were removed in 0.6.0). The supported
+# driver in 0.6.2 is `qiskit_nature.second_q.drivers.PySCFDriver`, which needs
+# the `pyscf` runtime listed at the bottom of this file.
+# ---------------------------------------------------------------------------
+qiskit==0.45.2
+qiskit-nature==0.6.2
+qiskit-aer==0.12.2
+qiskit-algorithms==0.2.2
+qiskit-terra==0.45.2
+
+# Algebraic topology backends (Rips filtration / persistence diagrams)
+#
+# LINUX NOTE: ripser 0.6.4 publishes wheels for Windows (cp38/cp39) and Linux
+# eggs for py3.8/py3.9 only -- there is no manylinux wheel for Python 3.10+, so
+# pip falls back to the sdist and needs a C++ toolchain:
+#
+#   sudo apt install build-essential python3-dev        # then: pip install -r ...
+#
+# If you would rather not build it, ripser 0.6.8 is the first release with
+# manylinux cp310 wheels and is API-compatible with the calls this project
+# makes (`ripser(..., maxdim=, thresh=, distance_matrix=, do_cocycles=)`):
+#
+#   pip install "ripser==0.6.8"      # or edit the pin below
+#
+# gudhi 3.9.0 ships manylinux cp310 wheels, so the cross-check backend needs no
+# build tools.
+ripser==0.6.4
+gudhi==3.9.0
+
+# Chemistry / geometry
+rdkit==2023.9.5
+#
+# pyscf is REQUIRED by qiskit-nature 0.6.2's PySCFDriver and is missing from the
+# original specification.  PyPI publishes no Windows wheel for any pyscf 2.x
+# (sdist only, and that needs CMake + a BLAS), so on Windows install it from
+# conda-forge instead of this file:
+#
+#   conda create -y -n qtmce -c conda-forge python=3.10.12 pyscf=2.4 \
+#                                              numpy=1.25.2 scipy=1.11.4
+#   conda run -n qtmce pip install -r requirements.txt   # pyscf already present
+#
+# Linux/macOS install it from PyPI as usual.
+pyscf==2.4.0
+
+# Numerics
+sympy==1.12
+numpy==1.25.2
+scipy==1.11.4
+
+# Cryptographic commitments
+cryptography==41.0.0
